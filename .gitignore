@@ -1,0 +1,52 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# Turbopack cache
+.turbo/ # <--- 추가
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+!.env.example # <--- .env.example을 사용한다면 추가 (선택 사항)
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+# next-env.d.ts # <--- 이 줄은 주석 처리하거나 삭제하여 Git이 추적하도록 하는 것을 권장
+
+# Editor directories and files (선택 사항, VS Code 사용 시 권장)
+# .vscode/*
+# !.vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
