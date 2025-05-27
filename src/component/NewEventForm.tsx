@@ -1,206 +1,293 @@
 // src/components/events/NewEventForm.tsx
-"use client"; // 클라이언트 컴포넌트로 만들어야 useState, 이벤트 핸들러 등 사용 가능
+"use client"; // 클라이언트 컴포넌트 명시
 
-import { useState, FormEvent } from 'react';
-// import { useRouter } from 'next/navigation'; // 페이지 이동 시 사용
-// import DatePicker from "react-datepicker"; // 예시 DatePicker
-// import "react-datepicker/dist/react-datepicker.css";
+import React, { useState, FormEvent } from 'react';
+// import { useRouter } from 'next/navigation'; // 페이지 이동 시 필요하면 주석 해제
+import Toast from '../component/common/Toast'; // 직접 만든 Toast 컴포넌트 임포트
+// import DatePicker from "react-datepicker"; // 외부 DatePicker 사용 시
+// import "react-datepicker/dist/react-datepicker.css"; // DatePicker CSS
 
 // (가정) 현재 로그인한 사용자 정보 (추후 실제 인증 시스템에서 가져옴)
-const MOCK_CURRENT_USER = { id: 'user123', role: 'member' }; // 'admin' 또는 'member'
+// 실제로는 Context API, Zustand, 또는 서버 세션 등을 통해 가져와야 합니다.
+const MOCK_CURRENT_USER = { id: 'user123', role: 'admin' }; // 'admin' 또는 'member'
+
+interface SelectedLocation { // KakaoMapSearch와 연동 시 사용될 타입 (지금은 사용 X)
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
 
 export default function NewEventForm() {
-  // const router = useRouter();
+  // const router = useRouter(); // 페이지 이동 시 필요하면 주석 해제
+
+  // 폼 필드 상태
   const [title, setTitle] = useState('');
   const [eventDate, setEventDate] = useState<Date | null>(null);
-  const [eventTime, setEventTime] = useState('19:00');
+  const [eventTime, setEventTime] = useState('19:00'); // 기본 시간 설정
   const [location, setLocation] = useState('');
-  const [eventType, setEventType] = useState('personal'); // 'personal' or 'regular'
-  const [maxParticipants, setMaxParticipants] = useState<number | string>(''); // 정기벙일때만
+  // const [selectedMapLocation, setSelectedMapLocation] = useState<SelectedLocation | null>(null); // 지도 연동 시 사용
+  const [eventType, setEventType] = useState('personal'); // 'personal' 또는 'regular'
+  const [maxParticipants, setMaxParticipants] = useState<number | string>('');
   const [notice, setNotice] = useState('');
+
+  // 폼 제출 및 토스트 관련 상태
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({
+    message: '',
+    type: 'info', // 기본 타입 (실제로는 error나 success로 변경됨)
+    show: false,
+  });
 
+  // 토스트 메시지 표시 함수
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ message, type, show: true });
+  };
+
+  // 토스트 메시지 닫기 함수
+  const closeToast = () => {
+    setToast((prev) => ({ ...prev, show: false }));
+  };
+
+  // 폼 제출 핸들러
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault(); // 기본 폼 제출 동작 방지
     setIsSubmitting(true);
-    setError(null);
+    closeToast(); // 이전 토스트가 있다면 닫기
 
-    // 유효성 검사 (간단 예시)
-    if (!title || !eventDate || !eventTime || !location) {
-      setError("모든 필수 항목을 입력해주세요.");
+    // --- 유효성 검사 시작 ---
+    if (!title.trim()) {
+      showToast("모임 제목을 입력해주세요.", 'error');
       setIsSubmitting(false);
       return;
     }
-    if (eventType === 'regular' && (!maxParticipants || Number(maxParticipants) < 1)) {
-      setError("정기벙의 경우 유효한 최대 참여 인원을 입력해주세요.");
+    if (!eventDate) {
+      showToast("모임 날짜를 선택해주세요.", 'error');
       setIsSubmitting(false);
       return;
     }
+    if (!eventTime) {
+      showToast("모임 시간을 선택해주세요.", 'error');
+      setIsSubmitting(false);
+      return;
+    }
+    if (!location.trim()) {
+      showToast("모임 장소를 입력해주세요.", 'error');
+      setIsSubmitting(false);
+      return;
+    }
+    if (eventType === 'regular' && MOCK_CURRENT_USER.role === 'admin') {
+      if (!maxParticipants || Number(maxParticipants) < 1) {
+        showToast("정기벙의 경우 유효한 최대 참여 인원을 입력해주세요 (1명 이상).", 'error');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    // --- 유효성 검사 끝 ---
 
     const eventData = {
-      title,
-      date: eventDate?.toISOString().split('T')[0], // YYYY-MM-DD 형식
+      title: title.trim(),
+      date: eventDate.toISOString().split('T')[0], // YYYY-MM-DD
       time: eventTime,
-      location,
+      location: location.trim(),
+      // locationDetails: selectedMapLocation, // 지도 연동 시
       type: eventType,
-      organizerId: MOCK_CURRENT_USER.id, // 현재 로그인 사용자 ID
+      organizerId: MOCK_CURRENT_USER.id,
       maxParticipants: eventType === 'regular' ? Number(maxParticipants) : null,
-      notice,
+      notice: notice.trim(),
       createdAt: new Date().toISOString(),
     };
 
-    console.log("새 모임 데이터:", eventData); // 실제로는 API 호출
+    console.log("제출할 새 모임 데이터:", eventData);
 
-    // 임시 성공 처리 (2초 후)
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert("모임이 성공적으로 생성되었습니다!");
-      // 폼 초기화 또는 페이지 이동
-      // router.push('/events'); // 예시: 모임 목록으로 이동
+    // --- 가상 API 호출 및 결과 처리 ---
+    try {
+      // 여기에 실제 fetch 또는 axios를 사용한 API 호출 로직이 들어갑니다.
+      // 예시: const response = await fetch('/api/events', { method: 'POST', ... });
+      // if (!response.ok) throw new Error('서버에서 오류가 발생했습니다.');
+
+      // 성공 시뮬레이션 (1.5초 후)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      showToast("모임이 성공적으로 생성되었습니다!", 'success');
+      // 폼 필드 초기화
       setTitle('');
       setEventDate(null);
-      // ... 다른 상태들도 초기화
-    }, 2000);
+      setEventTime('19:00');
+      setLocation('');
+      setEventType('personal');
+      setMaxParticipants('');
+      setNotice('');
+      // setSelectedMapLocation(null); // 지도 연동 시
+
+      // 페이지 이동 (예: 모임 목록 페이지로)
+      // router.push('/events');
+    } catch (error) {
+      console.error("모임 생성 오류:", error);
+      showToast(error instanceof Error ? error.message : "모임 생성 중 알 수 없는 오류가 발생했습니다.", 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+    // --- 가상 API 호출 및 결과 처리 끝 ---
   };
 
+  // 운영진만 정기벙 생성 가능 (MOCK_CURRENT_USER.role 기반)
   const canCreateRegularEvent = MOCK_CURRENT_USER.role === 'admin';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
-          모임 제목
-        </label>
-        <input
-          type="text"
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 모임 제목 */}
         <div>
-          <label htmlFor="eventDate" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
-            날짜
-          </label>
-          {/* DatePicker 컴포넌트 사용 권장 */}
-          <input
-             type="date"
-             id="eventDate"
-             value={eventDate ? eventDate.toISOString().split('T')[0] : ''}
-             onChange={(e) => setEventDate(e.target.value ? new Date(e.target.value) : null)}
-             className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
-             required
-          />
-          {/* <DatePicker selected={eventDate} onChange={(date: Date | null) => setEventDate(date)} className="w-full p-2 ..." /> */}
-        </div>
-        <div>
-          <label htmlFor="eventTime" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
-            시간
+          <label htmlFor="title" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
+            모임 제목 <span className="text-red-500">*</span>
           </label>
           <input
-            type="time"
-            id="eventTime"
-            value={eventTime}
-            onChange={(e) => setEventTime(e.target.value)}
+            type="text"
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
-            required
           />
         </div>
-      </div>
 
-      <div>
-        <label htmlFor="location" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
-          장소
-        </label>
-        <input
-          type="text"
-          id="location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
-          placeholder="예: 여의도 한강공원"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">모임 종류</label>
-        <div className="flex items-center space-x-4">
-          <label htmlFor="personal" className="flex items-center">
+        {/* 날짜 및 시간 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="eventDate" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
+              날짜 <span className="text-red-500">*</span>
+            </label>
+            {/* 실제 프로젝트에서는 react-datepicker 같은 라이브러리 사용 권장 */}
             <input
-              type="radio"
-              id="personal"
-              name="eventType"
-              value="personal"
-              checked={eventType === 'personal'}
-              onChange={(e) => setEventType(e.target.value)}
-              className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+              type="date"
+              id="eventDate"
+              value={eventDate ? eventDate.toISOString().split('T')[0] : ''}
+              onChange={(e) => setEventDate(e.target.value ? new Date(e.target.value) : null)}
+              className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
             />
-            <span className="ml-2 text-sm text-[rgb(var(--foreground-rgb))]">개인벙 (번개)</span>
-          </label>
-          {canCreateRegularEvent && ( // 운영진만 정기벙 생성 가능
-             <label htmlFor="regular" className="flex items-center">
-                 <input
-                 type="radio"
-                 id="regular"
-                 name="eventType"
-                 value="regular"
-                 checked={eventType === 'regular'}
-                 onChange={(e) => setEventType(e.target.value)}
-                 className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
-                 />
-                 <span className="ml-2 text-sm text-[rgb(var(--foreground-rgb))]">정기벙</span>
-             </label>
-          )}
+          </div>
+          <div>
+            <label htmlFor="eventTime" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
+              시간 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="time"
+              id="eventTime"
+              value={eventTime}
+              onChange={(e) => setEventTime(e.target.value)}
+              className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
+            />
+          </div>
         </div>
-      </div>
 
-      {eventType === 'regular' && canCreateRegularEvent && (
+        {/* 장소 */}
         <div>
-          <label htmlFor="maxParticipants" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
-            최대 참여 인원 (정기벙)
+          <label htmlFor="location" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
+            장소 <span className="text-red-500">*</span>
           </label>
           <input
-            type="number"
-            id="maxParticipants"
-            value={maxParticipants}
-            onChange={(e) => setMaxParticipants(e.target.value)}
-            min="1"
+            type="text"
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
             className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
+            placeholder="예: 여의도 한강공원 C지구"
           />
+          {/* 여기에 KakaoMapSearch 컴포넌트를 추가할 수 있습니다. */}
+          {/* <KakaoMapSearch onPlaceSelect={handlePlaceSelected} initialKeyword={location} /> */}
         </div>
-      )}
 
-      <div>
-        <label htmlFor="notice" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
-          공지사항 / 모임 설명
-        </label>
-        <textarea
-          id="notice"
-          value={notice}
-          onChange={(e) => setNotice(e.target.value)}
-          rows={5}
-          className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
-          placeholder="모임에 대한 자세한 내용을 입력해주세요. (준비물, 드레스코드, 특이사항 등)"
-        ></textarea>
-      </div>
+        {/* 모임 종류 */}
+        <div>
+          <label className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">모임 종류</label>
+          <div className="flex items-center space-x-4 mt-1">
+            <label htmlFor="personal" className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                id="personal"
+                name="eventType"
+                value="personal"
+                checked={eventType === 'personal'}
+                onChange={(e) => setEventType(e.target.value)}
+                className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+              />
+              <span className="ml-2 text-sm text-[rgb(var(--foreground-rgb))]">개인벙 (번개)</span>
+            </label>
+            {canCreateRegularEvent && (
+              <label htmlFor="regular" className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  id="regular"
+                  name="eventType"
+                  value="regular"
+                  checked={eventType === 'regular'}
+                  onChange={(e) => setEventType(e.target.value)}
+                  className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-[rgb(var(--foreground-rgb))]">정기벙</span>
+              </label>
+            )}
+          </div>
+        </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {/* 최대 참여 인원 (정기벙 선택 시) */}
+        {eventType === 'regular' && canCreateRegularEvent && (
+          <div>
+            <label htmlFor="maxParticipants" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
+              최대 참여 인원 (정기벙) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="maxParticipants"
+              value={maxParticipants}
+              onChange={(e) => setMaxParticipants(e.target.value)}
+              min="1"
+              className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
+              placeholder="숫자만 입력 (예: 20)"
+            />
+          </div>
+        )}
 
-      <div>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
-        >
-          {isSubmitting ? '생성 중...' : '모임 만들기'}
-        </button>
-      </div>
-    </form>
+        {/* 공지사항 */}
+        <div>
+          <label htmlFor="notice" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
+            공지사항 / 모임 설명
+          </label>
+          <textarea
+            id="notice"
+            value={notice}
+            onChange={(e) => setNotice(e.target.value)}
+            rows={5}
+            className="w-full p-2 border border-[rgb(var(--card-border-rgb))] rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]"
+            placeholder="모임에 대한 자세한 내용을 자유롭게 입력해주세요. (준비물, 드레스코드, 회비 안내, 특이사항 등)"
+          ></textarea>
+        </div>
+
+        {/* 제출 버튼 */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-150"
+          >
+            {isSubmitting ? (
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : '모임 만들기'}
+          </button>
+        </div>
+      </form>
+
+      {/* Toast 컴포넌트 */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        show={toast.show}
+        onClose={closeToast}
+        duration={toast.type === 'error' ? 5000 : 3000} // 에러 메시지는 조금 더 길게 표시
+      />
+    </>
   );
 }
