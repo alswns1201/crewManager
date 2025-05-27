@@ -11,6 +11,8 @@ import {
   FiCheckCircle,
   FiAlertCircle,
 } from 'react-icons/fi';
+import DashboardCard from '../component/DashboardCard'; // 경로 확인! src/app 기준이므로 
+
 
 // 임시 데이터 (실제로는 API 호출 또는 상태 관리 라이브러리를 통해 가져옵니다)
 const MOCK_DATA = {
@@ -31,30 +33,7 @@ const MOCK_DATA = {
   },
 };
 
-interface DashboardCardProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  actions?: React.ReactNode;
-}
 
-const DashboardCard: React.FC<DashboardCardProps> = ({ title, icon, children, className, actions }) => {
-  return (
-    <article className={`dashboard-card p-5 sm:p-6 flex flex-col ${className}`}>
-      <div className="flex justify-between items-start mb-3 sm:mb-4">
-        <div className="flex items-center space-x-3">
-          <span className="text-blue-500 dark:text-blue-400 text-2xl sm:text-3xl flex-shrink-0">{icon}</span>
-          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--foreground-rgb))]">{title}</h2>
-        </div>
-        {actions && <div className="text-sm flex-shrink-0 ml-2">{actions}</div>}
-      </div>
-      <div className="text-sm sm:text-base text-[rgb(var(--muted-foreground-rgb))] flex-grow">
-        {children}
-      </div>
-    </article>
-  );
-};
 
 export default function AdminDashboardPage() {
   return (
