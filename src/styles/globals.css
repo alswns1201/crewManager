@@ -1,8 +1,4 @@
 /* src/styles/globals.css */
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
-
 @import "tailwindcss";
 
 :root {
@@ -36,8 +32,6 @@
 }
 
 body {
-  /* layout.tsx 에서 geist 폰트 변수와 배경/글자색이 이미 className으로 적용되고 있습니다. */
-  /* font-family: var(--font-geist-sans), sans-serif;  <-- layout.tsx body className에 직접 명시 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -51,11 +45,14 @@ body {
 @layer components {
   .quick-action-button {
     @apply flex items-center justify-center text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
-    /* 
-      개별 버튼 색상에 따른 포커스 링 (예: focus:ring-blue-400)은 
-      각 <Link> 컴포넌트에 직접 Tailwind 클래스로 적용하는 것이 현재 구조에서는 더 간단합니다.
-      만약 이 버튼 스타일이 매우 다양한 곳에서 동일한 색상 조합으로 사용된다면, 
-      여기에 .quick-action-button-blue, .quick-action-button-green 등으로 세분화할 수 있습니다.
-    */
+  }
+
+  /* 모바일 하단 바 상단 그림자 (선택 사항) */
+  .shadow-top-md {
+    box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  /* 다크 모드용 상단 그림자 (선택 사항, 필요시 색상 조정) */
+  .dark .dark\:shadow-top-md-dark {
+    box-shadow: 0 -4px 6px -1px rgb(255 255 255 / 0.05), 0 -2px 4px -2px rgb(255 255 255 / 0.05);
   }
 }
