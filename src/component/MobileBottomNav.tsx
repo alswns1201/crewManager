@@ -15,7 +15,7 @@ const quickActions = [
   { href: "/events/new", icon: <FiPlusCircle />, label: "새 모임", mobileIconColor: "text-blue-600 dark:text-blue-400", mobileTextColor: "text-blue-700 dark:text-blue-300" },
   { href: "/members", icon: <FiUsers />, label: "회원관리", mobileIconColor: "text-green-600 dark:text-green-400", mobileTextColor: "text-green-700 dark:text-green-300" },
   { href: "/attendance", icon: <FiCheckCircle />, label: "출석체크", mobileIconColor: "text-yellow-600 dark:text-yellow-500", mobileTextColor: "text-yellow-700 dark:text-yellow-400" },
-  { href: "/finance", icon: <FiDollarSign />, label: "회비관리", mobileIconColor: "text-purple-600 dark:text-purple-400", mobileTextColor: "text-purple-700 dark:text-purple-300" },
+  { href: "/finance ", icon: <FiDollarSign />, label: "회비관리", mobileIconColor: "text-purple-600 dark:text-purple-400", mobileTextColor: "text-purple-700 dark:text-purple-300" },
 ];
 
 const MobileBottomNav: React.FC = () => {
