@@ -1,5 +1,5 @@
 // src/app/events/new/page.tsx
-import NewEventForm from '../../../component/NewEventForm'; // 폼 컴포넌트 경로 (예시)
+import NewEventForm from '@/component/events/NewEventForm'; // 폼 컴포넌트 경로 (예시)
 
 export default function NewEventAdd() {
   return (

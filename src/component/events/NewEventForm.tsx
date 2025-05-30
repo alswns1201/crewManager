@@ -3,7 +3,7 @@
 
 import React, { useState, FormEvent } from 'react';
 // import { useRouter } from 'next/navigation'; // 페이지 이동 시 필요하면 주석 해제
-import Toast from '../component/common/Toast'; // 직접 만든 Toast 컴포넌트 임포트
+import Toast from '@/component/common/Toast'; // 직접 만든 Toast 컴포넌트 임포트
 // import DatePicker from "react-datepicker"; // 외부 DatePicker 사용 시
 // import "react-datepicker/dist/react-datepicker.css"; // DatePicker CSS
 

@@ -13,6 +13,10 @@
   --card-border-rgb: 229, 231, 235; /* Tailwind gray-200 */
   
   --muted-foreground-rgb: 107, 114, 128; /* Tailwind gray-500 */
+
+ --color-red-500-rgb: 239, 68, 68; /* Tailwind red-500 */
+
+
 }
 
 @media (prefers-color-scheme: dark) {
