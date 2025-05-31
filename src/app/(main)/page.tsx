@@ -12,7 +12,7 @@ import {
   FiCheckCircle,
   FiAlertCircle,
 } from 'react-icons/fi';
-import DashboardCard from '../component/DashboardCard'; // 경로 확인
+import DashboardCard from '@/component/DashboardCard'; // 경로 확인
 
 // 임시 데이터 (이전과 동일)
 const MOCK_DATA = {

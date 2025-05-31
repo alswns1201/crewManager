@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Link from 'next/link';
 import { FiBell, FiSettings } from 'react-icons/fi';
 import { Geist, Geist_Mono } from "next/font/google"; // 폰트 임포트
-import "../styles/globals.css"; // globals.css 임포트
-import MobileBottomNav from '../component/MobileBottomNav'; // 새로 만든 컴포넌트 임포트 (경로 확인)
+import "@/styles/globals.css"; // globals.css 임포트
+import MobileBottomNav from '@/component/MobileBottomNav'; // 새로 만든 컴포넌트 임포트 (경로 확인)
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
