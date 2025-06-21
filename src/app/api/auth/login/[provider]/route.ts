@@ -4,19 +4,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { provider: string } }
+  context : { params: { provider: string } }
 ) {
   try {
-    const provider = params.provider;
+
+    const { provider } = await context.params;
     const body = await request.json(); // 클라이언트에서 보낸 JSON 데이터
 
-    // Next.js 서버에서 Spring Boot 백엔드로 안전하게 요청
+    // Next.js 서버에서 Spring Boot 백엔드로 안전하게 요청4
+  
     const backendResponse = await fetch(
       `${process.env.BACKEND_URL}/api/auth/login/${provider}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(body)
       }
     );
 
@@ -35,6 +37,6 @@ export async function POST(
     return response;
 
   } catch (error) {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ message: error+'Internal Server Error' }, { status: 500 });
   }
 }

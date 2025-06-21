@@ -7,7 +7,7 @@ import { FiUsers, FiArrowRight } from 'react-icons/fi';
 import { FaPlus } from 'react-icons/fa';
 import Image from 'next/image'; // Image 컴포넌트 추가
 
-type Role = 'member' | 'admin';
+type Role = 'CREW_MEMBER' | 'CREW_LEADER';
 
 // [신규] 크루 선택을 위한 목업 데이터
 const mockCrews = [
@@ -19,7 +19,7 @@ const mockCrews = [
 
 export default function SignupStep1Page() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>('admin');
+  const [role, setRole] = useState<Role>('CREW_MEMBER');
   const [newCrewName, setNewCrewName] = useState('');
   
   // [신규] 일반 회원이 선택한 크루 ID를 저장할 상태
@@ -35,13 +35,13 @@ export default function SignupStep1Page() {
     params.set('role', role);
 
     // [개선] 역할에 따른 유효성 검사 및 데이터 처리 강화
-    if (role === 'admin') {
+    if (role === 'CREW_LEADER') {
       if (!newCrewName.trim()) {
         setError('새로운 크루 이름을 입력해주세요.');
         return;
       }
       params.set('crewName', newCrewName.trim());
-    } else if (role === 'member') {
+    } else if (role === 'CREW_MEMBER') {
       if (!selectedCrewId) {
         setError('참여할 크루를 선택해주세요.');
         return;
@@ -71,14 +71,14 @@ export default function SignupStep1Page() {
             <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">가입 유형 <span className="text-red-500">*</span></label>
             <div className="flex flex-col sm:flex-row gap-4">
                 {/* 일반 회원 옵션 */}
-                <label className={`flex-1 p-5 border-2 rounded-xl cursor-pointer transition-all ${role === 'member' ? 'bg-blue-50 border-blue-600 shadow-md' : 'border-gray-200 hover:border-gray-400'}`}><div className="flex items-center space-x-4"><input type="radio" name="role" value="member" checked={role === 'member'} onChange={() => setRole('member')} className="form-radio h-5 w-5 text-blue-600"/><span><span className="font-semibold text-base"><FiUsers className="inline mr-2 mb-1"/>일반 회원</span><span className="block text-sm text-gray-500 mt-1">크루에 참여하여 활동합니다.</span></span></div></label>
+                <label className={`flex-1 p-5 border-2 rounded-xl cursor-pointer transition-all ${role === 'CREW_MEMBER' ? 'bg-blue-50 border-blue-600 shadow-md' : 'border-gray-200 hover:border-gray-400'}`}><div className="flex items-center space-x-4"><input type="radio" name="role" value="CREW_MEMBER" checked={role === 'CREW_MEMBER'} onChange={() => setRole('CREW_MEMBER')} className="form-radio h-5 w-5 text-blue-600"/><span><span className="font-semibold text-base"><FiUsers className="inline mr-2 mb-1"/>일반 회원</span><span className="block text-sm text-gray-500 mt-1">크루에 참여하여 활동합니다.</span></span></div></label>
                 {/* 크루 장 옵션 */}
-                <label className={`flex-1 p-5 border-2 rounded-xl cursor-pointer transition-all ${role === 'admin' ? 'bg-blue-50 border-blue-600 shadow-md' : 'border-gray-200 hover:border-gray-400'}`}><div className="flex items-center space-x-4"><input type="radio" name="role" value="admin" checked={role === 'admin'} onChange={() => setRole('admin')} className="form-radio h-5 w-5 text-blue-600"/><span><span className="font-semibold text-base"><FiUsers className="inline mr-2 mb-1"/>크루 장</span><span className="block text-sm text-gray-500 mt-1">새로운 크루를 개설합니다.</span></span></div></label>
+                <label className={`flex-1 p-5 border-2 rounded-xl cursor-pointer transition-all ${role === 'CREW_LEADER' ? 'bg-blue-50 border-blue-600 shadow-md' : 'border-gray-200 hover:border-gray-400'}`}><div className="flex items-center space-x-4"><input type="radio" name="role" value="CREW_LEADER" checked={role === 'CREW_LEADER'} onChange={() => setRole('CREW_LEADER')} className="form-radio h-5 w-5 text-blue-600"/><span><span className="font-semibold text-base"><FiUsers className="inline mr-2 mb-1"/>크루 장</span><span className="block text-sm text-gray-500 mt-1">새로운 크루를 개설합니다.</span></span></div></label>
             </div>
           </div>
           
           {/* [신규] '일반 회원' 선택 시 크루 선택 UI */}
-          {role === 'member' && (
+          {role === 'CREW_MEMBER' && (
             <div className="pt-4 space-y-3">
               <label className="block text-base font-semibold text-gray-800 dark:text-gray-200">참여할 크루 선택 <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -94,7 +94,7 @@ export default function SignupStep1Page() {
           )}
 
           {/* '크루 장' 선택 시 새 크루 이름 입력 */}
-          {role === 'admin' && (
+          {role === 'CREW_LEADER' && (
             <div className="pt-4">
               <label htmlFor="new-crew-name" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">새 크루 이름 <span className="text-red-500">*</span></label>
               <div className="relative"><div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><FaPlus className="h-4 w-4 text-gray-400"/></div><input id="new-crew-name" type="text" value={newCrewName} onChange={(e) => setNewCrewName(e.target.value)} required className="w-full px-4 py-3 pl-11 text-base border-2 rounded-lg focus:ring-blue-500 focus:border-blue-500"/></div>

@@ -4,15 +4,14 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FaComment, FaUser, FaPhone } from 'react-icons/fa';
+// ... 아이콘 import ...
 
-// localStorage에 저장할 데이터 타입 정의
 interface SignupFormData {
-  role: string;
+  crewMemberRole: string;
   crewName?: string;
-  crewId?: string;
+  // crewId?: string;
   name: string;
-  gender: string;
+  // gender: string;
   phoneNumber: string;
 }
 
@@ -20,106 +19,46 @@ function SignupDetailsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 1단계 정보 (URL 쿼리에서 초기값 설정)
   const initialRole = searchParams.get('role');
   const initialCrewName = searchParams.get('crewName');
   const initialCrewId = searchParams.get('crewId');
 
-  // 2단계 정보 상태
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [phoneNumber, setPhoneNumber] = useState('');
-
-  // 에러 및 로딩 상태
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // --- 소셜 로그인 흐름 제어 ---
-
-  // 1. 카카오/네이버 인증 페이지로 리디렉션하는 함수
+  // 카카오/네이버 인증 페이지로 리디렉션하는 함수
   const handleSocialLoginRedirect = (provider: 'kakao' | 'naver') => {
     setError(null);
-    // 폼 유효성 검사
     if (!initialRole || !name.trim() || !gender || !phoneNumber.trim()) {
       setError('모든 필수 정보를 입력해주세요.');
       return;
     }
 
-    // 리디렉션 전에 현재까지의 모든 폼 데이터를 localStorage에 저장
+    // 1. 모든 폼 데이터를 localStorage에 저장 (중요!)
     const formData: SignupFormData = {
-      role: initialRole,
+      crewMemberRole: initialRole,
       crewName: initialCrewName || undefined,
-      crewId: initialCrewId || undefined,
+      // crewId: initialCrewId || undefined,
       name,
-      gender,
+      // gender,
       phoneNumber,
     };
     localStorage.setItem('signupFormData', JSON.stringify(formData));
-    localStorage.setItem('loginProvider', provider); // 어떤 provider로 로그인 시도했는지도 저장
+    localStorage.setItem('loginProvider', provider);
 
-    // TODO: 실제 소셜 플랫폼의 인증 URL로 리디렉션
-    // 이 URL은 카카오/네이버 개발자 센터에서 발급받은 KEY와 Redirect URI를 사용해야 합니다.
-    const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
-    // 이 페이지로 다시 돌아오도록 redirect_uri 설정
-    const REDIRECT_URI = 'http://localhost:3000/signup/details';
+    // 2. 카카오 인증 URL 생성
+    const CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
+    // [수정] 인증 후 돌아올 주소를 전용 콜백 페이지로 명확히 지정
+    const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URL; 
+
     if (provider === 'kakao') {
-      window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
-    } else if (provider === 'naver') {
-      // 네이버 로그인 URL...
+      window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
     }
+    // ... 네이버 로직 ...
   };
-
-  // 2. 페이지 로드 시 URL에 인가 코드가 있는지 확인하고, 있다면 백엔드 API 호출
-  useEffect(() => {
-    const authorizationCode = searchParams.get('code');
-    const storedFormData = localStorage.getItem('signupFormData');
-    const storedProvider = localStorage.getItem('loginProvider');
-
-    // 인가 코드가 있고, 저장된 폼 데이터와 프로바이더 정보가 있을 때만 실행
-    if (authorizationCode && storedFormData && storedProvider) {
-      setIsLoading(true);
-      setError(null);
-      
-      const formData: SignupFormData = JSON.parse(storedFormData);
-
-      // 백엔드 API 호출 함수
-      const completeSignup = async () => {
-        try {
-          const response = await fetch(`/api/auth/login/${storedProvider}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              authorizationCode,
-              ...formData
-            }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || '가입에 실패했습니다.');
-          }
-
-          const result = await response.json();
-          // TODO: 받은 JWT(result.token)를 안전하게 저장 (HttpOnly 쿠키 등)
-          
-          // 성공 후 임시 데이터 삭제
-          localStorage.removeItem('signupFormData');
-          localStorage.removeItem('loginProvider');
-          
-          alert('회원가입 및 로그인이 완료되었습니다!');
-          router.push('/'); // 메인 페이지로 이동
-          
-        } catch (err: any) {
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      completeSignup();
-    }
-  }, [searchParams, router]);
-
+  
   // 1단계 정보가 없으면 초기 렌더링 시 리디렉션
   useEffect(() => {
     if (!initialRole) {
@@ -127,13 +66,14 @@ function SignupDetailsContent() {
       router.replace('/signup');
     }
   }, [initialRole, router]);
-
-  if (!initialRole) {
-    return <div className="text-center p-10">정보 확인 중...</div>;
-  }
   
+  // 이 페이지는 더 이상 인가 코드를 처리하지 않으므로 관련 useEffect는 삭제합니다.
+
+  if (!initialRole) return <div className="p-10 text-center">Loading...</div>;
+
   return (
     <div className="w-full max-w-lg space-y-8 p-8 sm:p-10 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl">
+      {/* --- UI 부분은 이전과 동일하게 유지 --- */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">회원가입 (2/2)</h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">마지막 단계입니다! 아래 정보를 입력해주세요.</p>
@@ -171,11 +111,11 @@ function SignupDetailsContent() {
       <div className="space-y-4 pt-4">
         <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t"/></div><div className="relative flex justify-center text-sm"><span className="px-3 bg-white">가입 완료하기</span></div></div>
         
-        <button type="button" onClick={() => handleSocialLoginRedirect('kakao')} disabled={isLoading} className="w-full p-3 bg-[#FEE500] rounded-lg font-bold disabled:bg-gray-300">
-          {isLoading ? '가입 처리 중...' : '카카오로 가입 완료'}
+        <button type="button" onClick={() => handleSocialLoginRedirect('kakao')} className="w-full p-3 bg-[#FEE500] rounded-lg font-bold">
+          카카오로 가입 완료
         </button>
-        <button type="button" onClick={() => handleSocialLoginRedirect('naver')} disabled={isLoading} className="w-full p-3 bg-[#03C75A] text-white rounded-lg font-bold disabled:bg-gray-300">
-          {isLoading ? '가입 처리 중...' : '네이버로 가입 완료'}
+        <button type="button" onClick={() => handleSocialLoginRedirect('naver')} className="w-full p-3 bg-[#03C75A] text-white rounded-lg font-bold">
+          네이버로 가입 완료
         </button>
         
         <div className="text-center">
@@ -188,7 +128,7 @@ function SignupDetailsContent() {
 
 export default function SignupDetailsPage() {
     return (
-        <Suspense fallback={<div className="text-center p-10">Loading...</div>}>
+        <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
             <SignupDetailsContent />
         </Suspense>
     )

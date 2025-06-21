@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: debug server-side", // 디버거 이름 (자유롭게 변경 가능)
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev", // 또는 "yarn dev"
+      "serverReadyAction": {
+        "pattern": "started server on .+, url: (https?://.+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    }
+  ]
+}
