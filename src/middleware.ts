@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 로그인/회원가입 관련 페이지 경로 목록
-  const publicAuthPaths = ['/login', '/signup', '/auth'];
+  const publicAuthPaths = ['/login', '/signup', '/auth','/callback'];
 
   // 요청 경로가 publicAuthPaths 중 하나로 시작하는지 확인
   const isPublicAuthPath = publicAuthPaths.some(path => pathname.startsWith(path));
@@ -23,7 +23,6 @@ export function middleware(request: NextRequest) {
   if (!authToken && !isPublicAuthPath) {
     console.log('인증되지 않은 사용자가 보호된 페이지 접근. 로그인 페이지로 리디렉션합니다.');
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
   }
 

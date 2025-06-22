@@ -5,7 +5,7 @@ import { FiBell, FiSettings } from 'react-icons/fi';
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import MobileBottomNav from '@/component/MobileBottomNav';
-import UserProfile from '@/component/userComponent'; // 새로 만든 UserProfile 컴포넌트 임포트
+import UserProfile from '@/component/UserProfile'; // 새로 만든 UserProfile 컴포넌트 임포트
 
 // ... (폰트 및 metadata 설정은 기존과 동일) ...
 const geistSans = Geist({ variable: "--font-geist-sans", display: 'swap' });
