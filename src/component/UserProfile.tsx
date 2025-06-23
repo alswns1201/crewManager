@@ -22,34 +22,16 @@ export default function UserProfile() {
   useEffect(() => {
     // "내 정보 조회" API를 호출하는 함수
     const checkUserStatus = async () => {
-      // 1. localStorage에서 저장된 Access Token을 가져옵니다.
-      // (로그인 시 'accessToken'이라는 키로 저장했다고 가정)
-      const token = localStorage.getItem('accessToken');
 
-      // 토큰이 없으면 로그인되지 않은 상태이므로 즉시 종료합니다.
-      if (!token) {
-        setIsLoading(false);
-        setUser(null);
-        return;
-      }
 
       try {
         // 2. fetch 요청 시 headers에 Authorization을 추가합니다.
-        const response = await fetch('/api/users/me', {
-          headers: {
-            // 'Bearer ' 접두사는 JWT 표준입니다. Spring Security가 이를 기대합니다.
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch('/api/users/me');
 
         if (response.ok) { // API 호출이 성공하면 (200 OK)
           const userData: User = await response.json();
           setUser(userData); // 사용자 정보를 상태에 저장 => 로그인 된 것으로 간주
-        } else { // API 호출이 실패하면 (401 Unauthorized 등)
-          setUser(null); // 사용자 정보 null => 로그인 안 된 것으로 간주
-          // 토큰이 만료되었을 수 있으니 삭제해주는 것이 좋습니다.
-          localStorage.removeItem('accessToken');
-        }
+        } 
       } catch (error) {
         console.error("로그인 상태 확인 실패:", error);
         setUser(null);
@@ -61,11 +43,10 @@ export default function UserProfile() {
   }, []);
 
   // ... (handleLogout, 드롭다운 로직 등은 이전 답변과 동일)
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
+  const handleLogout = async() => {
+    await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
     setIsDropdownOpen(false);
-    // 필요하다면 페이지를 새로고침하거나 로그인 페이지로 보냅니다.
     router.push('/login'); // 예시
   };
 
