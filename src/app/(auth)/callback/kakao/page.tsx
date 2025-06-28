@@ -49,6 +49,7 @@ function KakaoCallbackContent() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
+           credentials: 'include',  // 여기 꼭 추가
         });
 
         if (!response.ok) {
@@ -79,6 +80,12 @@ function KakaoCallbackContent() {
             localStorage.removeItem('signupFormData');
             localStorage.removeItem('loginProvider');
         }
+
+          // 2초 후 메인 페이지로 이동 (replace를 사용하여 뒤로가기 방지)
+        setTimeout(() => {
+          // 로그인 후에는 대시보드나 사용자의 메인 페이지로 보내는 것이 일반적입니다.
+          router.replace('/'); // '/dashboard' 또는 메인 페이지('/')
+        }, 3000);
       }
     };
 

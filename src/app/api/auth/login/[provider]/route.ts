@@ -31,9 +31,8 @@ export async function POST(
     const jwtToken = await backendResponse.text();
 
     // 여기서 쿠키에 JWT를 설정하는 등 추가 작업을 할 수 있음
-    const response = NextResponse.json({ token: jwtToken }, { status: 200 });
+    const response = NextResponse.json({ success: true }, { status: 200 });
     response.cookies.set('accessToken', jwtToken, { httpOnly: true, path: '/' });
-
     return response;
 
   } catch (error) {

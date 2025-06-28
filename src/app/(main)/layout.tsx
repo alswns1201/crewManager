@@ -1,11 +1,12 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import Link from 'next/link';
-import { FiBell, FiSettings } from 'react-icons/fi';
+import { FiBell, FiSettings ,FiLogOut } from 'react-icons/fi';
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import MobileBottomNav from '@/component/MobileBottomNav';
-import UserProfile from '@/component/UserProfile'; // 새로 만든 UserProfile 컴포넌트 임포트
+import LogoutButton from "@/component/common/LogoutButton";
+
 
 // ... (폰트 및 metadata 설정은 기존과 동일) ...
 const geistSans = Geist({ variable: "--font-geist-sans", display: 'swap' });
@@ -16,6 +17,8 @@ export const metadata: Metadata = {
   description: "효율적인 크루 활동 관리를 위한 운영진용 대시보드입니다.",
   icons: { icon: '/favicon.ico' },
 };
+
+
 
 
 export default function RootLayout({
@@ -52,8 +55,8 @@ export default function RootLayout({
                 </Link>
                 
                 {/* [변경점] 기존 div를 UserProfile 컴포넌트로 교체합니다. */}
-                <UserProfile />
-
+                {/* <UserProfile /> */}
+                <LogoutButton/>
               </div>
             </div>
           </header>

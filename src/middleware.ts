@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 로그인/회원가입 관련 페이지 경로 목록
-  const publicAuthPaths = ['/login', '/signup', '/auth','/callback'];
+  const publicAuthPaths = ['/login','/api/auth/login', '/signup','/callback','/api/crew/all'];
 
   // 요청 경로가 publicAuthPaths 중 하나로 시작하는지 확인
   const isPublicAuthPath = publicAuthPaths.some(path => pathname.startsWith(path));
@@ -34,6 +34,6 @@ export function middleware(request: NextRequest) {
 // 정적 파일과 API 요청을 제외한 모든 페이지 요청에 대해 실행되도록 합니다.
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+      '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
