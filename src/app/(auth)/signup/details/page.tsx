@@ -54,7 +54,7 @@ function SignupDetailsContent() {
     const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URL; 
 
     if (provider === 'kakao') {
-      window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+      window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&prompt=login`;
     }
     // ... 네이버 로직 ...
   };

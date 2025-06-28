@@ -126,13 +126,18 @@ export default function SignupStep1Page() {
                 <div className="p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md text-sm">{apiError}</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {crews.map((crew) => (
+                  {
+                  crews.length > 0 ? 
+                  crews.map((crew) => (
                     <label key={crew.id} className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${selectedCrewId === crew.id ? 'bg-blue-50 border-blue-500' : 'border-gray-200 hover:border-gray-400'}`}>
                       <input type="radio" name="crew" value={crew.id} checked={selectedCrewId === crew.id} onChange={() => setSelectedCrewId(crew.id)} className="sr-only"/>
                       {/* <Image src={crew.logoUrl || '/logos/default.png'} alt={`${crew.name} 로고`} width={40} height={40} className="rounded-full mr-3 bg-gray-200" /> */}
                       <span className="font-medium text-gray-800 dark:text-gray-200">{crew.name}</span>
                     </label>
-                  ))}
+                  ))
+                  :
+                  <><span>등록된 크루가 없습니다</span></>
+                }
                 </div>
               )}
             </div>
