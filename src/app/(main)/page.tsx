@@ -1,149 +1,200 @@
-// src/app/page.tsx
-import Link from 'next/link';
-import React from 'react';
-import {
-  FiUsers,
-  FiCalendar,
-  FiDollarSign,
-  FiPlusCircle,
-  FiActivity,
-  FiClipboard,
-  FiTrendingUp,
-  FiCheckCircle,
-  FiAlertCircle,
-} from 'react-icons/fi';
-import DashboardCard from '@/component/DashboardCard'; // 경로 확인
+"use client";
 
-// 임시 데이터 (이전과 동일)
-const MOCK_DATA = {
-  // ... (MOCK_DATA 내용) ...
-  upcomingEvents: [
-   { id: 'evt001', name: "새벽 정기런 (한강)", date: "2024-07-28", time: "06:00", participants: 15, capacity: 30, location: "여의도 한강공원" },
-   { id: 'evt002', name: "주말 트레일 러닝 (북한산)", date: "2024-08-03", time: "09:00", participants: 8, capacity: 15, location: "북한산성 입구" },
- ],
- recentActivities: [
-   { id: 'act001', user: "김러너", action: "새 모임 '저녁 인터벌 트레이닝' 생성", time: "2시간 전" },
-   { id: 'act002', user: "이운영", action: "회원 '박참가' 출석 처리", time: "5시간 전" },
-   { id: 'act003', user: "최크루", action: "8월 회비 납부 완료", time: "어제" },
- ],
- stats: {
-   totalMembers: 120,
-   activeMembers: 95,
-   monthlyAttendanceRate: 78.5,
-   pendingFeePayments: 7,
- },
+import React, { useState } from "react";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  isSameMonth,
+  isSameDay,
+  parseISO,
+} from "date-fns";
+import DashboardCard from "@/component/DashboardCard"; // 경로가 맞는지 확인해주세요.
+import { useCrew } from "@/context/CrewContext";
+import { FiUsers, FiDollarSign, FiPlusCircle, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import Link from "next/link";
+
+// 타입 정의
+type Member = {
+  id: string;
+  name: string;
+  hasPaidFee: boolean;
 };
 
-// 웹용 빠른 실행 버튼 데이터 (모바일용은 MobileBottomNav.tsx 로 이동 또는 공유)
-const quickActionsForWeb = [
-  { href: "/events/new", icon: <FiPlusCircle />, label: "새 모임 만들기", color: "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400 dark:focus:ring-blue-500" },
-  { href: "/members", icon: <FiUsers />, label: "회원 관리", color: "bg-green-500 hover:bg-green-600 focus:ring-green-400 dark:focus:ring-green-500" },
-  { href: "/attendance", icon: <FiCheckCircle />, label: "출석 체크", color: "bg-yellow-500 hover:bg-yellow-600 text-yellow-900 focus:ring-yellow-400 dark:focus:ring-yellow-500" },
-  { href: "/finance", icon: <FiDollarSign />, label: "회비 관리", color: "bg-purple-500 hover:bg-purple-600 focus:ring-purple-400 dark:focus:ring-purple-500" },
-];
+type Event = {
+  id: string;
+  name: string;
+  date: string; // 'YYYY-MM-DD' 형식
+  manager: string;
+};
+
+type Crew = {
+  members: Member[];
+  events: Event[];
+};
+
+type CrewData = {
+  [key: string]: Crew;
+};
+
+// 목업 데이터
+const CREW_DATA: CrewData = {
+  crew1: {
+    members: [
+      { id: "m001", name: "김러너", hasPaidFee: true },
+      { id: "m002", name: "박참가", hasPaidFee: false },
+    ],
+    events: [{ id: "evt001", name: "새벽 정기런", date: "2025-06-13", manager: "양치훈" }],
+  },
+  crew2: {
+    members: [
+      { id: "m003", name: "이운영", hasPaidFee: true },
+      { id: "m004", name: "최크루", hasPaidFee: false },
+    ],
+    events: [{ id: "evt002", name: "트레일 러닝", date: "2025-06-20", manager: "PHAM" }],
+  },
+  crew3: {
+    members: [],
+    events: [],
+  },
+};
 
 export default function AdminDashboardPage() {
+  const { selectedCrewId } = useCrew();
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const crew = CREW_DATA[selectedCrewId] || { members: [], events: [] };
+
+  // 월 시작/끝, 주 시작/끝 (월요일 시작)
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+  const calendarDays = [];
+  let day = startDate;
+  while (day <= endDate) {
+    calendarDays.push(day);
+    day = addDays(day, 1);
+  }
+
+  const handleClickEvent = (id: string) => {
+    alert(`이벤트 상세 보기: ${id}`);
+  };
+
+  const prevMonth = () => setCurrentMonth(addDays(monthStart, -1));
+  const nextMonth = () => setCurrentMonth(addDays(monthEnd, 1));
+
   return (
-    // 최상위 div에서 pb-24 sm:pb-0 제거 (layout.tsx에서 body에 적용)
-    <div className="space-y-6 sm:space-y-8"> 
-      {/* 환영 메시지 */}
-      <section aria-labelledby="welcome-heading">
-        <h1 id="welcome-heading" className="text-2xl sm:text-3xl font-semibold text-[rgb(var(--foreground-rgb))]">
-          안녕하세요, 운영진님! 👋
-        </h1>
-        <p className="mt-1 text-base sm:text-lg text-[rgb(var(--muted-foreground-rgb))]">
-          오늘의 크루 현황을 확인하고 주요 업무를 처리하세요.
-        </p>
+    <>
+      <h1 className="text-4xl font-extrabold mb-10 text-gray-800">👋 안녕하세요, 운영진님!</h1>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <DashboardCard
+          title="총 회원 수"
+          icon={<FiUsers className="text-blue-600" size={28} />}
+        >
+          <p className="text-4xl font-bold">{crew.members.length}명</p>
+        </DashboardCard>
+
+        <DashboardCard
+          title="회비 미납"
+          icon={<FiDollarSign className="text-red-500" size={28} />}
+        >
+          <p className="text-4xl font-bold text-red-500">
+            {crew.members.filter((m) => !m.hasPaidFee).length}명
+          </p>
+        </DashboardCard>
       </section>
 
-      {/* 빠른 실행 버튼 - 웹 (sm 이상 화면에서 보임) */}
-      <section aria-label="빠른 실행 메뉴 (웹)" className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {quickActionsForWeb.map((action) => ( // quickActionsForWeb 사용
-          <Link 
-            key={action.href} 
-            href={action.href} 
-            className={`quick-action-button ${action.color}`}
+      <section className="bg-white rounded-xl shadow-sm p-6">
+        <header className="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 text-gray-700">
+            📅 모임 일정
+          </h2>
+          <Link
+            href="/events/new"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105"
           >
-            {React.cloneElement(action.icon, { className: "w-5 h-5 mr-2 flex-shrink-0" })}
-            {action.label}
+            <FiPlusCircle size={20} />
+            모임 등록
           </Link>
-        ))}
-      </section>
-      
-      {/* 주요 통계 (이전과 동일) */}
-      <section aria-label="주요 통계">
-        {/* ... */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-         <DashboardCard title="총 회원 수" icon={<FiUsers />}>
-           <p className="text-3xl font-bold text-[rgb(var(--foreground-rgb))]">{MOCK_DATA.stats.totalMembers}명</p>
-         </DashboardCard>
-         <DashboardCard title="월간 출석률" icon={<FiTrendingUp />}>
-           <p className="text-3xl font-bold text-green-600 dark:text-green-400">{MOCK_DATA.stats.monthlyAttendanceRate}%</p>
-         </DashboardCard>
-         <DashboardCard title="활성 멤버" icon={<FiActivity />}>
-           <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{MOCK_DATA.stats.activeMembers}명</p>
-         </DashboardCard>
-         <DashboardCard title="회비 미납" icon={<FiAlertCircle />}>
-           <p className="text-3xl font-bold text-red-600 dark:text-red-400">{MOCK_DATA.stats.pendingFeePayments}명</p>
-           <Link href="/finance/unpaid" className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 block">상세 보기</Link>
-         </DashboardCard>
-       </div>
-      </section>
+        </header>
 
-      {/* 예정된 모임 및 최근 활동 (이전과 동일) */}
-      <section aria-label="예정된 모임 및 최근 활동" className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* ... */}
-        <DashboardCard 
-         title="예정된 모임" 
-         icon={<FiCalendar />} 
-         className="lg:col-span-2"
-         actions={<Link href="/events" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">모두 보기</Link>}
-       >
-         {MOCK_DATA.upcomingEvents.length > 0 ? (
-           <ul className="space-y-3">
-             {MOCK_DATA.upcomingEvents.map(event => (
-               <li key={event.id} className="p-3 bg-gray-50 dark:bg-slate-800 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group">
-                 <Link href={`/events/${event.id}`} className="block">
-                   <div className="flex justify-between items-start">
-                     <h3 className="font-medium text-sm sm:text-base text-[rgb(var(--foreground-rgb))] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{event.name}</h3>
-                     <span className="text-xs sm:text-sm text-[rgb(var(--muted-foreground-rgb))] whitespace-nowrap ml-2">{event.date} {event.time}</span>
-                   </div>
-                   <p className="text-xs text-[rgb(var(--muted-foreground-rgb))] mt-1">
-                     장소: {event.location}
-                   </p>
-                   <p className="text-xs text-[rgb(var(--muted-foreground-rgb))] mt-0.5">
-                     참여: {event.participants} / {event.capacity}명
-                   </p>
-                 </Link>
-               </li>
-             ))}
-           </ul>
-         ) : (
-           <p className="text-[rgb(var(--muted-foreground-rgb))]">예정된 모임이 없습니다.</p>
-         )}
-       </DashboardCard>
+        <div className="flex justify-between items-center mb-4 text-gray-700">
+          <button
+            onClick={prevMonth}
+            aria-label="이전 달"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <FiChevronLeft size={24} />
+          </button>
+          <div className="text-xl font-semibold">{format(currentMonth, "yyyy년 MM월")}</div>
+          <button
+            onClick={nextMonth}
+            aria-label="다음 달"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <FiChevronRight size={24} />
+          </button>
+        </div>
 
-       <DashboardCard 
-         title="최근 활동 로그" 
-         icon={<FiClipboard />}
-         actions={<Link href="/activity-log" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">전체 로그</Link>}
-       >
-         {MOCK_DATA.recentActivities.length > 0 ? (
-           <ul className="space-y-2.5">
-             {MOCK_DATA.recentActivities.map(activity => (
-               <li key={activity.id} className="text-xs sm:text-sm">
-                 <span className="font-medium text-[rgb(var(--foreground-rgb))]">{activity.user}</span>: {activity.action}
-                 <span className="block text-[rgb(var(--muted-foreground-rgb))] text-xs">{activity.time}</span>
-               </li>
-             ))}
-           </ul>
-         ) : (
-           <p className="text-[rgb(var(--muted-foreground-rgb))]">최근 활동이 없습니다.</p>
-         )}
-       </DashboardCard>
+        <div className="grid grid-cols-7 border-l border-t border-gray-200">
+          {/* 요일 헤더 */}
+          {["월", "화", "수", "목", "금", "토", "일"].map((dayName) => (
+            <div
+              key={dayName}
+              className="bg-gray-50 py-3 font-semibold text-gray-600 text-center text-sm border-r border-b border-gray-200"
+            >
+              {dayName}
+            </div>
+          ))}
+
+          {/* 날짜 셀 */}
+          {calendarDays.map((d, i) => {
+            const evts = crew.events.filter((e) => isSameDay(parseISO(e.date), d));
+            const isToday = isSameDay(d, new Date());
+            const inMonth = isSameMonth(d, currentMonth);
+
+            return (
+              <div
+                key={i}
+                className={`
+                  relative min-h-[120px] p-2 flex flex-col bg-white border-r border-b border-gray-200
+                  transition-colors
+                  ${!inMonth ? "bg-gray-50" : "hover:bg-blue-50"}
+                `}
+              >
+                <span
+                  className={`
+                    font-medium mb-1 text-sm
+                    ${isToday ? "flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full" : ""}
+                    ${!inMonth ? "text-gray-400" : "text-gray-700"}
+                  `}
+                >
+                  {format(d, "d")}
+                </span>
+                
+                <div className="flex flex-col gap-1 overflow-y-auto flex-grow">
+                  {evts.map((e) => (
+                    <button
+                      key={e.id}
+                      onClick={() => handleClickEvent(e.id)}
+                      title={`관리자: ${e.manager}`}
+                      className="w-full text-xs bg-green-100 hover:bg-green-200 text-green-800 font-semibold rounded px-2 py-1 text-left truncate transition-colors"
+                    >
+                      {e.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </section>
-
-      {/* 모바일용 하단 고정 버튼 코드는 여기서 제거 */}
-    </div>
+    </>
   );
 }
