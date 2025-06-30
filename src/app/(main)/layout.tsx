@@ -1,4 +1,4 @@
-// app/layout.tsx
+// app/layout.tsx (제공해주신 코드에서 변경 없음)
 
 "use client";
 
@@ -10,23 +10,20 @@ import CrewSidebar from "@/component/common/CrewSidebar";
 import MobileBottomNav from "@/component/MobileBottomNav";
 import LogoutButton from "@/component/common/LogoutButton";
 import Link from "next/link";
-import { FiBell, FiSettings, FiMenu } from "react-icons/fi"; // FiMenu 아이콘 추가
+import { FiBell, FiSettings, FiMenu } from "react-icons/fi";
+import { isToday, parseISO } from "date-fns";
 
 const geistSans = Geist({ variable: "--font-geist-sans", display: "swap" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", display: "swap" });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // 사이드바 열림/닫힘 상태는 그대로 유지합니다.
-  const [isSidebarOpen, setSidebarOpen] = useState(false); // 기본값을 false로 변경
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
+  // 헤더 구조를 조금 더 명확하게 수정합니다.
   return (
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="bg-gray-50 text-gray-800 font-sans">
+      <body className="bg-gray-50 text-gray-800 font-sans pb-20 sm:pb-0">
         <CrewProvider>
-          {/* 
-            [1] 사이드바와 오버레이를 렌더링합니다. 
-            상태에 따라 나타나고 사라집니다.
-          */}
           <CrewSidebar open={isSidebarOpen} setOpen={setSidebarOpen} />
           {isSidebarOpen && (
             <div
@@ -35,29 +32,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               aria-hidden="true"
             ></div>
           )}
-
           <div className="flex flex-col min-h-screen">
-            {/* 
-              [2] 상단 헤더 구조를 변경합니다.
-              - 햄버거 메뉴 버튼을 추가합니다.
-              - 기존의 좌측 여백(ml-*) 클래스는 제거합니다.
-            */}
             <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-sm shadow-sm flex justify-between items-center px-4 sm:px-6 h-16 border-b">
               <div className="flex items-center gap-4">
-                {/* 햄버거 메뉴 버튼 */}
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100"
+                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100 sm:hidden"
                   aria-label="메뉴 열기"
                 >
                   <FiMenu size={24} />
                 </button>
-                {/* 페이지 타이틀 또는 로고 */}
                 <Link href="/" className="text-xl font-bold text-gray-800">
                   CrewManager Pro
                 </Link>
               </div>
-
               <div className="flex items-center space-x-2 sm:space-x-4">
                 <button className="p-2 rounded-full hover:bg-gray-100">
                   <FiBell className="w-5 h-5 text-gray-600" />
@@ -68,12 +56,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <LogoutButton />
               </div>
             </header>
-
-            {/* 메인 콘텐츠 영역 */}
             <main className="flex-grow p-4 sm:p-8">{children}</main>
           </div>
-          
-          {/* 모바일 하단 내비게이션은 그대로 유지 */}
           <MobileBottomNav />
         </CrewProvider>
       </body>
