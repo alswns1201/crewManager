@@ -10,70 +10,79 @@ import {
   FiUsers,
   FiCheckCircle,
   FiDollarSign,
-  FiMoreHorizontal, // '더보기' 아이콘 추가
-  FiCalendar,     // '일정' 아이콘 추가
+  FiCalendar,
 } from 'react-icons/fi';
 
-// [수정] 5개 아이템 구조로 재설계 (중앙 아이템은 홈)
-// 가운데 홈 버튼을 위한 공간을 만들기 위해 null을 placeholder로 사용합니다.
+// 홈 버튼을 제외한 4개의 메뉴 아이템 정의
 const navItems = [
   { href: "/schedule", label: "일정", icon: <FiCalendar size={24} /> },
   { href: "/members", label: "회원", icon: <FiUsers size={24} /> },
-  { href: null, label: 'Home', icon: null }, // 중앙 홈 버튼을 위한 공간
   { href: "/finance", label: "회비관리", icon: <FiDollarSign size={24} /> },
-  { href: "/more", label: "더보기", icon: <FiMoreHorizontal size={24} /> },
+  { href: "/attendance", label: "출석체크", icon: <FiCheckCircle size={24} /> },
 ];
 
 const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
 
   return (
-    // [✅ 핵심 수정 1] 부모 컨테이너에 relative 클래스 추가
-    // absolute로 위치시킬 홈 버튼의 기준점이 됩니다.
-    <div className="sm:hidden fixed bottom-0 left-0 right-0 h-20 z-40">
+    // 1. 전체 래퍼 (돌출된 버튼을 위한 추가 높이 확보)
+    <div className="sm:hidden fixed bottom-0 left-0 right-0 h-24 z-40">
       
-      {/* [✅ 핵심 수정 2] 중앙에 위치할 플로팅 홈 버튼 */}
-      <Link href="/"
-        className="absolute left-1/2 -translate-x-1/2 bottom-5 bg-blue-600 text-white w-16 h-16 rounded-full flex flex-col items-center justify-center shadow-lg transition-transform hover:scale-110"
-        aria-label="홈으로 이동"
-      >
-        <FiHome size={28} />
-        <span className="text-xs mt-0.5">홈</span>
-      </Link>
-
-      {/* [✅ 핵심 수정 3] 실제 하단 바 */}
+      {/* 3. 하단 바 (배경 역할) */}
       <nav
         aria-label="메인 메뉴 (모바일)"
-        className="bg-white border-t border-gray-200 h-full shadow-top-md"
+        className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-20 shadow-top-md"
       >
+        {/* 4. 아이콘 배치용 Flex 컨테이너 */}
         <div className="flex justify-around items-center h-full">
-          {navItems.map((item, index) => (
-            <div key={index} className="w-1/5 flex justify-center">
-              {/* href가 null인 중앙 아이템은 렌더링하지 않아 공간만 차지합니다. */}
-              {item.href ? (
-                <Link
-                  href={item.href}
-                  className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${
-                      pathname === item.href
-                      ? 'text-blue-600' 
-                      : 'text-gray-500 hover:text-blue-500'
-                  }`}
-                >
-                  {item.icon}
-                  <span className={`text-xs font-medium`}>
-                    {item.label}
-                  </span>
-                </Link>
-              ) : (
-                // 빈 공간
-                <div></div>
-              )}
-            </div>
-          ))}
+          {/* 왼쪽 2개 아이템 */}
+          <div className="w-1/5 flex justify-center">
+            <NavItem item={navItems[0]} pathname={pathname} />
+          </div>
+          <div className="w-1/5 flex justify-center">
+            <NavItem item={navItems[1]} pathname={pathname} />
+          </div>
+          
+          {/* 5. 중앙의 빈 공간 (자리 차지용) */}
+          {/* 이 빈 div가 홈 버튼을 위한 시각적 공간을 만들어줍니다. */}
+          <div className="w-1/5">
+            <Link href="/"
+                className="absolute left-1/2 -translate-x-1/2 bottom-5 bg-blue-600 text-white w-16 h-16 rounded-full flex flex-col items-center justify-center shadow-lg transition-transform hover:scale-110"
+                aria-label="홈으로 이동"
+              >
+                <FiHome size={28} />
+                <span className="text-[10px] mt-0.5 font-semibold">홈</span>
+            </Link>
+          </div>
+
+          {/* 오른쪽 2개 아이템 */}
+          <div className="w-1/5 flex justify-center">
+            <NavItem item={navItems[2]} pathname={pathname} />
+          </div>
+          <div className="w-1/5 flex justify-center">
+            <NavItem item={navItems[3]} pathname={pathname} />
+          </div>
         </div>
       </nav>
     </div>
   );
 };
+
+// 재사용성을 위한 개별 아이템 컴포넌트
+const NavItem = ({ item, pathname }: { item: typeof navItems[0], pathname: string }) => (
+    <Link
+        href={item.href}
+        className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${
+            pathname === item.href
+            ? 'text-blue-600' 
+            : 'text-gray-500 hover:text-blue-500'
+        }`}
+    >
+        {item.icon}
+        <span className={`text-xs font-medium`}>
+            {item.label}
+        </span>
+    </Link>
+);
 
 export default MobileBottomNav;
