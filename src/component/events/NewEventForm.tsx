@@ -9,7 +9,7 @@ import Toast from '@/component/common/Toast'; // 직접 만든 Toast 컴포넌�
 
 // (가정) 현재 로그인한 사용자 정보 (추후 실제 인증 시스템에서 가져옴)
 // 실제로는 Context API, Zustand, 또는 서버 세션 등을 통해 가져와야 합니다.
-const MOCK_CURRENT_USER = { id: 'user123', role: 'admin' }; // 'admin' 또는 'member'
+const MOCK_CURRENT_USER = { email: 'mjkim1201@naver.com'}; 
 
 interface SelectedLocation { // KakaoMapSearch와 연동 시 사용될 타입 (지금은 사용 X)
   name: string;
@@ -55,7 +55,6 @@ export default function NewEventForm() {
     setIsSubmitting(true);
     closeToast(); // 이전 토스트가 있다면 닫기
 
-    // --- 유효성 검사 시작 ---
     if (!title.trim()) {
       showToast("모임 제목을 입력해주세요.", 'error');
       setIsSubmitting(false);
@@ -76,63 +75,58 @@ export default function NewEventForm() {
       setIsSubmitting(false);
       return;
     }
-    if (eventType === 'regular' && MOCK_CURRENT_USER.role === 'admin') {
+    if (eventType === 'regular') {
       if (!maxParticipants || Number(maxParticipants) < 1) {
         showToast("정기벙의 경우 유효한 최대 참여 인원을 입력해주세요 (1명 이상).", 'error');
         setIsSubmitting(false);
         return;
       }
     }
-    // --- 유효성 검사 끝 ---
 
     const eventData = {
+   userEmail: MOCK_CURRENT_USER.email,
       title: title.trim(),
-      date: eventDate.toISOString().split('T')[0], // YYYY-MM-DD
-      time: eventTime,
-      location: location.trim(),
-      // locationDetails: selectedMapLocation, // 지도 연동 시
-      type: eventType,
-      organizerId: MOCK_CURRENT_USER.id,
-      maxParticipants: eventType === 'regular' ? Number(maxParticipants) : null,
-      notice: notice.trim(),
-      createdAt: new Date().toISOString(),
+      location: {
+        locationName: location.trim(),
+        address: location.trim(),
+        latitude: 0,
+        longitude: 0,
+      },
+      description: notice.trim(),
+      eventType: eventType === 'personal' ? 'PERSONAL' : 'REGULAR',
+      eventDateTime: new Date(`${eventDate?.toISOString().split('T')[0]}T${eventTime}`).toISOString(),
     };
 
-    console.log("제출할 새 모임 데이터:", eventData);
-
-    // --- 가상 API 호출 및 결과 처리 ---
     try {
-      // 여기에 실제 fetch 또는 axios를 사용한 API 호출 로직이 들어갑니다.
-      // 예시: const response = await fetch('/api/events', { method: 'POST', ... });
-      // if (!response.ok) throw new Error('서버에서 오류가 발생했습니다.');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/event/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData),
+        credentials: 'include'
+      });
 
-      // 성공 시뮬레이션 (1.5초 후)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const data = await response.json(); 
+      if (!response.ok) {
+        throw new Error(data.message || '모임 생성 실패');
+      }
+        showToast("모임이 성공적으로 생성되었습니다!", 'success');
+        // 초기화 로직
+        setTitle('');
+        setEventDate(null);
+        setEventTime('');
+        setLocation('');
+        setEventType('personal');
+        setMaxParticipants('');
+        setNotice('');
 
-      showToast("모임이 성공적으로 생성되었습니다!", 'success');
-      // 폼 필드 초기화
-      setTitle('');
-      setEventDate(null);
-      setEventTime('19:00');
-      setLocation('');
-      setEventType('personal');
-      setMaxParticipants('');
-      setNotice('');
-      // setSelectedMapLocation(null); // 지도 연동 시
-
-      // 페이지 이동 (예: 모임 목록 페이지로)
-      // router.push('/events');
     } catch (error) {
       console.error("모임 생성 오류:", error);
       showToast(error instanceof Error ? error.message : "모임 생성 중 알 수 없는 오류가 발생했습니다.", 'error');
     } finally {
       setIsSubmitting(false);
     }
-    // --- 가상 API 호출 및 결과 처리 끝 ---
   };
 
-  // 운영진만 정기벙 생성 가능 (MOCK_CURRENT_USER.role 기반)
-  const canCreateRegularEvent = MOCK_CURRENT_USER.role === 'admin';
 
   return (
     <>
@@ -213,8 +207,8 @@ export default function NewEventForm() {
               />
               <span className="ml-2 text-sm text-[rgb(var(--foreground-rgb))]">개인벙 (번개)</span>
             </label>
-            {canCreateRegularEvent && (
-              <label htmlFor="regular" className="flex items-center cursor-pointer">
+    
+            <label htmlFor="regular" className="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   id="regular"
@@ -225,13 +219,12 @@ export default function NewEventForm() {
                   className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
                 />
                 <span className="ml-2 text-sm text-[rgb(var(--foreground-rgb))]">정기벙</span>
-              </label>
-            )}
+            </label>
           </div>
         </div>
 
         {/* 최대 참여 인원 (정기벙 선택 시) */}
-        {eventType === 'regular' && canCreateRegularEvent && (
+        {eventType === 'regular' && (
           <div>
             <label htmlFor="maxParticipants" className="block text-sm font-medium text-[rgb(var(--muted-foreground-rgb))] mb-1">
               최대 참여 인원 (정기벙) <span className="text-red-500">*</span>

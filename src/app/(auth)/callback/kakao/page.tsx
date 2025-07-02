@@ -45,11 +45,11 @@ function KakaoCallbackContent() {
       
       try {
         // 3. 백엔드 API 호출 (회원가입/로그인 통합)
-        const response = await fetch(`/api/auth/login/${provider}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login/${provider}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
-           credentials: 'include',  // 여기 꼭 추가
+          credentials: 'include',
         });
 
         if (!response.ok) {

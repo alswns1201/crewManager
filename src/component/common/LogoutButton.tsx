@@ -9,7 +9,13 @@ export default function LogoutButton() {
   const [message, setMessage] = useState("");
 
   const handleLogout = async () => {
-    const res = await fetch("/api/auth/logout", { method: "POST" });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      }
+     
+    );
     const text = await res.text();
     console.log("로그아웃 응답:", text); // 콘솔 확인용
 
