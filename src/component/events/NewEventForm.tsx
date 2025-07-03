@@ -2,6 +2,7 @@
 "use client"; // 클라이언트 컴포넌트 명시
 
 import React, { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 // import { useRouter } from 'next/navigation'; // 페이지 이동 시 필요하면 주석 해제
 import Toast from '@/component/common/Toast'; // 직접 만든 Toast 컴포넌트 임포트
 // import DatePicker from "react-datepicker"; // 외부 DatePicker 사용 시
@@ -20,7 +21,7 @@ interface SelectedLocation { // KakaoMapSearch와 연동 시 사용될 타입 (�
 
 export default function NewEventForm() {
   // const router = useRouter(); // 페이지 이동 시 필요하면 주석 해제
-
+  const router = useRouter();
   // 폼 필드 상태
   const [title, setTitle] = useState('');
   const [eventDate, setEventDate] = useState<Date | null>(null);
@@ -84,7 +85,7 @@ export default function NewEventForm() {
     }
 
     const eventData = {
-   userEmail: MOCK_CURRENT_USER.email,
+      userEmail: MOCK_CURRENT_USER.email,
       title: title.trim(),
       location: {
         locationName: location.trim(),
@@ -98,7 +99,7 @@ export default function NewEventForm() {
     };
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/event/create`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/events/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData),
@@ -118,6 +119,7 @@ export default function NewEventForm() {
         setEventType('personal');
         setMaxParticipants('');
         setNotice('');
+
 
     } catch (error) {
       console.error("모임 생성 오류:", error);

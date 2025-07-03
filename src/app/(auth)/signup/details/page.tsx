@@ -82,7 +82,7 @@ function SignupDetailsContent() {
       <div className="p-5 bg-gray-50 rounded-xl border">
         <h3 className="text-base font-semibold">가입 정보 요약</h3>
         <ul className="mt-3 space-y-2 text-sm">
-          <li><strong>가입 유형:</strong> {initialRole === 'admin' ? '크루장' : '일반 회원'}</li>
+          <li><strong>가입 유형:</strong> {initialRole === 'CREW_LEADER' ? '크루장' : '일반 회원'}</li>
           {initialCrewName && <li><strong>크루 이름:</strong> {initialCrewName}</li>}
         </ul>
       </div>

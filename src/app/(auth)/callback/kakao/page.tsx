@@ -69,7 +69,7 @@ function KakaoCallbackContent() {
         setTimeout(() => {
           // 로그인 후에는 대시보드나 사용자의 메인 페이지로 보내는 것이 일반적입니다.
           router.replace('/'); // '/dashboard' 또는 메인 페이지('/')
-        }, 2000);
+        }, 1000);
 
       } catch (err: any) {
         // 5. 실패 처리
