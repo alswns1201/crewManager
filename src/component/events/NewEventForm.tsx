@@ -139,6 +139,13 @@ export default function NewEventForm({onClose}: NewEventFormProps) {
     }
   };
 
+  const isPastDateTime = () => {
+    if (!eventDate || !eventTime) return false;
+
+    const eventDateTime = new Date(`${eventDate.toISOString().split('T')[0]}T${eventTime}`);
+    return eventDateTime < new Date();
+  };
+
 
   return (
     <>
@@ -272,8 +279,12 @@ export default function NewEventForm({onClose}: NewEventFormProps) {
         <div className="pt-2">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-150"
+            disabled={isSubmitting || isPastDateTime()}
+            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white transition-colors duration-150 ${
+              isSubmitting || isPastDateTime()
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             {isSubmitting ? (
               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
