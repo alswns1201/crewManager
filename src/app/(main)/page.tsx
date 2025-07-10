@@ -51,7 +51,7 @@ const CreateEventModal = ({ onClose, onEventCreated }: { onClose: () => void; on
                     <h2 className="text-xl font-bold text-gray-800">새 모임 등록</h2>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100"><FiX size={24} /></button>
                 </header>
-                <div className="p-6 overflow-y-auto"><NewEventForm /></div>
+                <div className="p-6 overflow-y-auto"><NewEventForm onClose={onClose}/></div>
             </div>
         </div>
     );

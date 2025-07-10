@@ -19,7 +19,13 @@ interface SelectedLocation { // KakaoMapSearch와 연동 시 사용될 타입 (�
   lng: number;
 }
 
-export default function NewEventForm() {
+interface NewEventFormProps {
+  onClose?: () => void; // 부모로부터 받는 닫기 함수
+}
+
+
+
+export default function NewEventForm({onClose}: NewEventFormProps) {
   // const router = useRouter(); // 페이지 이동 시 필요하면 주석 해제
   const router = useRouter();
   // 폼 필드 상태
@@ -36,7 +42,7 @@ export default function NewEventForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({
     message: '',
-    type: 'info', // 기본 타입 (실제로는 error나 success로 변경됨)
+    type: 'success', // 기본 타입 (실제로는 error나 success로 변경됨)
     show: false,
   });
 
@@ -119,6 +125,10 @@ export default function NewEventForm() {
         setEventType('personal');
         setMaxParticipants('');
         setNotice('');
+
+        setTimeout(() => {
+          onClose?.(); // 부모에게 닫기 요청
+        }, 1000);
 
 
     } catch (error) {
