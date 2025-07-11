@@ -1,149 +1,212 @@
-// src/app/page.tsx
-import Link from 'next/link';
-import React from 'react';
-import {
-  FiUsers,
-  FiCalendar,
-  FiDollarSign,
-  FiPlusCircle,
-  FiActivity,
-  FiClipboard,
-  FiTrendingUp,
-  FiCheckCircle,
-  FiAlertCircle,
-} from 'react-icons/fi';
-import DashboardCard from '@/component/DashboardCard'; // 경로 확인
+// app/page.tsx
 
-// 임시 데이터 (이전과 동일)
-const MOCK_DATA = {
-  // ... (MOCK_DATA 내용) ...
-  upcomingEvents: [
-   { id: 'evt001', name: "새벽 정기런 (한강)", date: "2024-07-28", time: "06:00", participants: 15, capacity: 30, location: "여의도 한강공원" },
-   { id: 'evt002', name: "주말 트레일 러닝 (북한산)", date: "2024-08-03", time: "09:00", participants: 8, capacity: 15, location: "북한산성 입구" },
- ],
- recentActivities: [
-   { id: 'act001', user: "김러너", action: "새 모임 '저녁 인터벌 트레이닝' 생성", time: "2시간 전" },
-   { id: 'act002', user: "이운영", action: "회원 '박참가' 출석 처리", time: "5시간 전" },
-   { id: 'act003', user: "최크루", action: "8월 회비 납부 완료", time: "어제" },
- ],
- stats: {
-   totalMembers: 120,
-   activeMembers: 95,
-   monthlyAttendanceRate: 78.5,
-   pendingFeePayments: 7,
- },
+"use client";
+
+import React, { useState, useMemo } from "react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, parseISO, subMonths, addMonths } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { useCrew } from "@/context/CrewContext";
+import { FiPlus, FiChevronLeft, FiChevronRight, FiX, FiUser, FiUsers, FiCheck, FiXCircle, FiChevronDown, FiMessageSquare, FiMapPin, FiTag } from "react-icons/fi";
+import NewEventForm from "@/component/events/NewEventForm"; // 경로 확인
+
+// --- 타입 정의 ---
+type Member = { id: string; name: string; };
+type Event = {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  endDate: string;
+  location: string;
+  managerId: string;
+  attendees: string[];
+  absentees: string[];
+};
+type Crew = { members: Member[]; events: Event[]; };
+type CrewData = { [key: string]: Crew; };
+
+// --- 목업 데이터 ---
+const CREW_DATA: CrewData = {
+  crew1: {
+    members: [
+      { id: "m001", name: "김러너" },
+      { id: "m002", name: "박참가" },
+      { id: "m003", name: "최크루" },
+    ],
+    events: [
+      { id: "evt001", title: "새벽 정기런", description: "남산 N타워 앞에서 만나요! 준비물: 편한 운동화, 물", date: new Date().toISOString(), endDate: new Date(new Date().setHours(new Date().getHours() + 1)).toISOString(), location: "남산 N타워", managerId: "m001", attendees: ["m001", "m003"], absentees: [] },
+      { id: "evt002", title: "저녁 회식", description: "강남역 10번 출구 맛집에서 봅니다. 회비 3만원!", date: new Date().toISOString(), endDate: new Date(new Date().setHours(new Date().getHours() + 2)).toISOString(), location: "강남역", managerId: "m002", attendees: ["m002"], absentees: ["m001"] },
+    ],
+  },
 };
 
-// 웹용 빠른 실행 버튼 데이터 (모바일용은 MobileBottomNav.tsx 로 이동 또는 공유)
-const quickActionsForWeb = [
-  { href: "/events/new", icon: <FiPlusCircle />, label: "새 모임 만들기", color: "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400 dark:focus:ring-blue-500" },
-  { href: "/members", icon: <FiUsers />, label: "회원 관리", color: "bg-green-500 hover:bg-green-600 focus:ring-green-400 dark:focus:ring-green-500" },
-  { href: "/attendance", icon: <FiCheckCircle />, label: "출석 체크", color: "bg-yellow-500 hover:bg-yellow-600 text-yellow-900 focus:ring-yellow-400 dark:focus:ring-yellow-500" },
-  { href: "/finance", icon: <FiDollarSign />, label: "회비 관리", color: "bg-purple-500 hover:bg-purple-600 focus:ring-purple-400 dark:focus:ring-purple-500" },
-];
+// --- 자식 컴포넌트들 ---
 
-export default function AdminDashboardPage() {
-  return (
-    // 최상위 div에서 pb-24 sm:pb-0 제거 (layout.tsx에서 body에 적용)
-    <div className="space-y-6 sm:space-y-8"> 
-      {/* 환영 메시지 */}
-      <section aria-labelledby="welcome-heading">
-        <h1 id="welcome-heading" className="text-2xl sm:text-3xl font-semibold text-[rgb(var(--foreground-rgb))]">
-          안녕하세요, 운영진님! 👋
-        </h1>
-        <p className="mt-1 text-base sm:text-lg text-[rgb(var(--muted-foreground-rgb))]">
-          오늘의 크루 현황을 확인하고 주요 업무를 처리하세요.
-        </p>
-      </section>
+// 1. 일정 등록 모달 (기존과 동일)
+const CreateEventModal = ({ onClose, onEventCreated }: { onClose: () => void; onEventCreated: () => void; }) => {
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <header className="p-4 border-b flex justify-between items-center flex-shrink-0">
+                    <h2 className="text-xl font-bold text-gray-800">새 모임 등록</h2>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100"><FiX size={24} /></button>
+                </header>
+                <div className="p-6 overflow-y-auto"><NewEventForm onClose={onClose}/></div>
+            </div>
+        </div>
+    );
+};
 
-      {/* 빠른 실행 버튼 - 웹 (sm 이상 화면에서 보임) */}
-      <section aria-label="빠른 실행 메뉴 (웹)" className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {quickActionsForWeb.map((action) => ( // quickActionsForWeb 사용
-          <Link 
-            key={action.href} 
-            href={action.href} 
-            className={`quick-action-button ${action.color}`}
-          >
-            {React.cloneElement(action.icon, { className: "w-5 h-5 mr-2 flex-shrink-0" })}
-            {action.label}
-          </Link>
-        ))}
-      </section>
-      
-      {/* 주요 통계 (이전과 동일) */}
-      <section aria-label="주요 통계">
-        {/* ... */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-         <DashboardCard title="총 회원 수" icon={<FiUsers />}>
-           <p className="text-3xl font-bold text-[rgb(var(--foreground-rgb))]">{MOCK_DATA.stats.totalMembers}명</p>
-         </DashboardCard>
-         <DashboardCard title="월간 출석률" icon={<FiTrendingUp />}>
-           <p className="text-3xl font-bold text-green-600 dark:text-green-400">{MOCK_DATA.stats.monthlyAttendanceRate}%</p>
-         </DashboardCard>
-         <DashboardCard title="활성 멤버" icon={<FiActivity />}>
-           <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{MOCK_DATA.stats.activeMembers}명</p>
-         </DashboardCard>
-         <DashboardCard title="회비 미납" icon={<FiAlertCircle />}>
-           <p className="text-3xl font-bold text-red-600 dark:text-red-400">{MOCK_DATA.stats.pendingFeePayments}명</p>
-           <Link href="/finance/unpaid" className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 block">상세 보기</Link>
-         </DashboardCard>
-       </div>
-      </section>
+// 2. 왼쪽 미니 캘린더 (UI 컴팩트하게 수정)
+const ScheduleCalendar = ({ currentMonth, setCurrentMonth, selectedDate, onDateSelect, events, onAddClick }: { currentMonth: Date; setCurrentMonth: (d: Date) => void; selectedDate: Date; onDateSelect: (d: Date) => void; events: Event[]; onAddClick: () => void; }) => {
+    const monthStart = startOfMonth(currentMonth);
+    const calendarDays: Date[] = [];
+    let day = startOfWeek(monthStart, { weekStartsOn: 0 });
+    for (let i = 0; i < 42; i++) { calendarDays.push(day); day = addDays(day, 1); }
+    return (
+        <div className="bg-white rounded-lg shadow-sm p-3 h-full">
+            <header className="flex justify-between items-center mb-2">
+                <h2 className="text-base font-semibold">{format(currentMonth, 'yyyy. MM')}</h2>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-full hover:bg-gray-100"><FiChevronLeft /></button>
+                    <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-full hover:bg-gray-100"><FiChevronRight /></button>
+                    <button onClick={onAddClick} className="p-1.5 rounded-full hover:bg-gray-100"><FiPlus /></button>
+                </div>
+            </header>
+            <div className="grid grid-cols-7 text-center text-xs text-gray-500 font-semibold">
+                {['일', '월', '화', '수', '목', '금', '토'].map(d => <div key={d} className="py-1.5">{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7 text-center">
+                {calendarDays.map((d, i) => {
+                    const isSelected = isSameDay(d, selectedDate);
+                    const inMonth = isSameMonth(d, currentMonth);
+                    const hasEvent = events.some(e => isSameDay(parseISO(e.date), d));
+                    return (
+                        <div key={i} className="py-0.5 flex justify-center">
+                            <button onClick={() => onDateSelect(d)} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative text-sm ${!inMonth ? 'text-gray-300' : 'text-gray-800 hover:bg-blue-100'} ${isSelected ? 'bg-black text-white font-bold' : ''}`}>
+                                {format(d, 'd')}
+                                {hasEvent && !isSelected && <span className="absolute bottom-1.5 h-1 w-1 bg-blue-500 rounded-full"></span>}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
 
-      {/* 예정된 모임 및 최근 활동 (이전과 동일) */}
-      <section aria-label="예정된 모임 및 최근 활동" className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* ... */}
-        <DashboardCard 
-         title="예정된 모임" 
-         icon={<FiCalendar />} 
-         className="lg:col-span-2"
-         actions={<Link href="/events" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">모두 보기</Link>}
-       >
-         {MOCK_DATA.upcomingEvents.length > 0 ? (
-           <ul className="space-y-3">
-             {MOCK_DATA.upcomingEvents.map(event => (
-               <li key={event.id} className="p-3 bg-gray-50 dark:bg-slate-800 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors group">
-                 <Link href={`/events/${event.id}`} className="block">
-                   <div className="flex justify-between items-start">
-                     <h3 className="font-medium text-sm sm:text-base text-[rgb(var(--foreground-rgb))] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{event.name}</h3>
-                     <span className="text-xs sm:text-sm text-[rgb(var(--muted-foreground-rgb))] whitespace-nowrap ml-2">{event.date} {event.time}</span>
-                   </div>
-                   <p className="text-xs text-[rgb(var(--muted-foreground-rgb))] mt-1">
-                     장소: {event.location}
-                   </p>
-                   <p className="text-xs text-[rgb(var(--muted-foreground-rgb))] mt-0.5">
-                     참여: {event.participants} / {event.capacity}명
-                   </p>
-                 </Link>
-               </li>
-             ))}
-           </ul>
-         ) : (
-           <p className="text-[rgb(var(--muted-foreground-rgb))]">예정된 모임이 없습니다.</p>
-         )}
-       </DashboardCard>
+// 3. [✅ 핵심 수정] 오른쪽 일정 카드 (아코디언 스타일)
+const EventCard = ({ event, currentUserId, members }: { event: Event; currentUserId: string; members: Member[] }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [attendees, setAttendees] = useState(event.attendees);
+    const [absentees, setAbsentees] = useState(event.absentees);
+    const myStatus = attendees.includes(currentUserId) ? 'attending' : absentees.includes(currentUserId) ? 'absent' : 'none';
+    const manager = members.find(m => m.id === event.managerId)?.name || '알 수 없음';
+    const handleAttend = (e: React.MouseEvent) => { e.stopPropagation(); setAttendees(prev => [...new Set([...prev, currentUserId])]); setAbsentees(prev => prev.filter(id => id !== currentUserId)); };
+    const handleAbsent = (e: React.MouseEvent) => { e.stopPropagation(); setAbsentees(prev => [...new Set([...prev, currentUserId])]); setAttendees(prev => prev.filter(id => id !== currentUserId)); };
+    
+    return (
+        <div className="border rounded-lg bg-white transition-shadow hover:shadow-md">
+            <div className="flex items-center justify-between p-3 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+                <div className="flex-grow space-y-1.5 mr-4">
+                    <h3 className="font-bold text-base text-gray-800">{event.title}</h3>
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1"><FiUser size={12} /> {manager}</span>
+                        <span className="flex items-center gap-1"><FiUsers size={12} /> 참석 {attendees.length}명</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={handleAttend} className={`px-3 py-1 text-xs rounded-full font-semibold transition-colors flex items-center gap-1.5 ${myStatus === 'attending' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                        <FiCheck size={14} /> 참석
+                    </button>
+                    <FiChevronDown className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+            </div>
+            {isOpen && (
+                <div className="border-t p-4 space-y-4">
+                    <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-wrap">{event.description || "상세 설명이 없습니다."}</div>
+                    <div className="text-sm text-gray-500 flex items-center gap-2"><FiMapPin size={14} /><span>{event.location}</span></div>
+                    <div className="border-t pt-4">
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-2"><FiMessageSquare size={14} /> 댓글</h4>
+                        <div className="text-xs text-center text-gray-400 py-4">댓글 기능은 준비 중입니다.</div>
+                    </div>
+                     <div className="flex justify-end pt-2">
+                        <button onClick={handleAbsent} className={`px-4 py-1.5 text-xs rounded-md font-semibold transition-colors flex items-center gap-1.5 ${myStatus === 'absent' ? 'bg-red-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                            <FiXCircle size={14} /> 불참
+                        </button>
+                     </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
-       <DashboardCard 
-         title="최근 활동 로그" 
-         icon={<FiClipboard />}
-         actions={<Link href="/activity-log" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">전체 로그</Link>}
-       >
-         {MOCK_DATA.recentActivities.length > 0 ? (
-           <ul className="space-y-2.5">
-             {MOCK_DATA.recentActivities.map(activity => (
-               <li key={activity.id} className="text-xs sm:text-sm">
-                 <span className="font-medium text-[rgb(var(--foreground-rgb))]">{activity.user}</span>: {activity.action}
-                 <span className="block text-[rgb(var(--muted-foreground-rgb))] text-xs">{activity.time}</span>
-               </li>
-             ))}
-           </ul>
-         ) : (
-           <p className="text-[rgb(var(--muted-foreground-rgb))]">최근 활동이 없습니다.</p>
-         )}
-       </DashboardCard>
-      </section>
+// 4. 오른쪽 데일리 이벤트 리스트 (UI 컴팩트하게 수정)
+const DailyEventList = ({ selectedDate, events, members, currentUserId }: { selectedDate: Date; events: Event[]; members: Member[]; currentUserId: string; }) => {
+    return (
+        <div className="bg-white rounded-lg shadow-sm h-full flex flex-col">
+            <header className="p-3 border-b">
+                <h2 className="text-base font-semibold">{format(selectedDate, 'M월 d일 EEEE', { locale: ko })}</h2>
+            </header>
+            <div className="p-3 space-y-3 overflow-y-auto flex-grow">
+                {events.length > 0 ? (
+                    events.map(event => <EventCard key={event.id} event={event} members={members} currentUserId={currentUserId} />)
+                ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                        <p className="text-sm">등록된 일정이 없습니다.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
-      {/* 모바일용 하단 고정 버튼 코드는 여기서 제거 */}
-    </div>
-  );
+// --- 메인 페이지 컴포넌트 (UI 컴팩트하게 수정) ---
+export default function ScheduleBoardPage() {
+    const { selectedCrewId } = useCrew();
+    const [crewData, setCrewData] = useState(CREW_DATA);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
+    const currentCrew = crewData[selectedCrewId] || { members: [], events: [] };
+
+    const handleEventCreated = () => {
+        setCreateModalOpen(false);
+        alert("새로운 모임이 등록되었습니다!");
+    };
+
+    const dailyEvents = useMemo(() => 
+        currentCrew.events.filter(event => 
+            isSameDay(parseISO(event.date), selectedDate)
+        ), 
+        [currentCrew.events, selectedDate]
+    );
+
+    return (
+        <div className="flex flex-col h-full">
+            <h1 className="text-2xl font-bold mb-4 flex-shrink-0">📅 스케줄 보드</h1>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow min-h-0">
+                <div className="lg:col-span-1">
+                    <ScheduleCalendar
+                        currentMonth={currentMonth}
+                        setCurrentMonth={setCurrentMonth}
+                        selectedDate={selectedDate}
+                        onDateSelect={setSelectedDate}
+                        events={currentCrew.events}
+                        onAddClick={() => setCreateModalOpen(true)}
+                    />
+                </div>
+                <div className="lg:col-span-2 flex flex-col min-h-0">
+                    <DailyEventList
+                        selectedDate={selectedDate}
+                        events={dailyEvents}
+                        members={currentCrew.members}
+                        currentUserId="m001"
+                    />
+                </div>
+            </div>
+            {isCreateModalOpen && <CreateEventModal onClose={() => setCreateModalOpen(false)} onEventCreated={handleEventCreated} />}
+        </div>
+    );
 }

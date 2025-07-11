@@ -35,7 +35,10 @@ export default function SignupStep1Page() {
         setApiError(null);
 
         // [중요] 호출 주소가 Spring API가 아닌 Next.js의 API 라우트로 변경됩니다.
-        const response = await fetch('/api/crew/all');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/crew/all`,{
+          method: 'GET',
+          headers: {'Content-Type': 'application/json'},
+        });
 
         if (!response.ok) {
           const errorData = await response.json();

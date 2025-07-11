@@ -45,11 +45,11 @@ function KakaoCallbackContent() {
       
       try {
         // 3. 백엔드 API 호출 (회원가입/로그인 통합)
-        const response = await fetch(`/api/auth/login/${provider}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login/${provider}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
-           credentials: 'include',  // 여기 꼭 추가
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -69,7 +69,7 @@ function KakaoCallbackContent() {
         setTimeout(() => {
           // 로그인 후에는 대시보드나 사용자의 메인 페이지로 보내는 것이 일반적입니다.
           router.replace('/'); // '/dashboard' 또는 메인 페이지('/')
-        }, 2000);
+        }, 1000);
 
       } catch (err: any) {
         // 5. 실패 처리

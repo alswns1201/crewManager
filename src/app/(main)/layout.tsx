@@ -1,76 +1,65 @@
-// src/app/layout.tsx
-import type { Metadata } from "next";
-import Link from 'next/link';
-import { FiBell, FiSettings ,FiLogOut } from 'react-icons/fi';
+// app/layout.tsx (제공해주신 코드에서 변경 없음)
+
+"use client";
+
+import React, { useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
-import MobileBottomNav from '@/component/MobileBottomNav';
+import { CrewProvider } from "@/context/CrewContext";
+import CrewSidebar from "@/component/common/CrewSidebar";
+import MobileBottomNav from "@/component/MobileBottomNav";
 import LogoutButton from "@/component/common/LogoutButton";
+import Link from "next/link";
+import { FiBell, FiSettings, FiMenu } from "react-icons/fi";
+import { isToday, parseISO } from "date-fns";
 
+const geistSans = Geist({ variable: "--font-geist-sans", display: "swap" });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", display: "swap" });
 
-// ... (폰트 및 metadata 설정은 기존과 동일) ...
-const geistSans = Geist({ variable: "--font-geist-sans", display: 'swap' });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", display: 'swap' });
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-export const metadata: Metadata = {
-  title: "CrewManager Pro",
-  description: "효율적인 크루 활동 관리를 위한 운영진용 대시보드입니다.",
-  icons: { icon: '/favicon.ico' },
-};
-
-
-
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+  // 헤더 구조를 조금 더 명확하게 수정합니다.
   return (
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body
-        className={`antialiased bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))] font-sans pb-24 sm:pb-0`}
-      >
-        <div className="min-h-screen flex flex-col">
-          {/* 헤더 */}
-          <header className="sticky top-0 z-30 w-full bg-[rgb(var(--card-rgb))] shadow-md backdrop-blur-sm transition-colors duration-300">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-              <Link href="/" className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 hover:opacity-80 transition-opacity">
-                CrewManager Pro
-              </Link>
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                {/* 알림과 설정 버튼은 그대로 둡니다. */}
+      <body className="bg-gray-50 text-gray-800 font-sans pb-20 sm:pb-0">
+        <CrewProvider>
+          <CrewSidebar open={isSidebarOpen} setOpen={setSidebarOpen} />
+          {isSidebarOpen && (
+            <div
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+              aria-hidden="true"
+            ></div>
+          )}
+          <div className="flex flex-col min-h-screen">
+            <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-sm shadow-sm flex justify-between items-center px-4 sm:px-6 h-16 border-b">
+              <div className="flex items-center gap-4">
                 <button
-                  aria-label="알림"
-                  className="p-2 rounded-full text-[rgb(var(--muted-foreground-rgb))] hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[rgb(var(--foreground-rgb))] transition-colors"
+                  onClick={() => setSidebarOpen(true)}
+                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100 sm:hidden"
+                  aria-label="메뉴 열기"
                 >
-                  <FiBell className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <FiMenu size={24} />
                 </button>
-                <Link
-                  href="/settings"
-                  aria-label="설정"
-                  className="p-2 rounded-full text-[rgb(var(--muted-foreground-rgb))] hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[rgb(var(--foreground-rgb))] transition-colors"
-                >
-                  <FiSettings className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Link href="/" className="text-xl font-bold text-gray-800">
+                  CrewManager Pro
                 </Link>
-                
-                {/* [변경점] 기존 div를 UserProfile 컴포넌트로 교체합니다. */}
-                {/* <UserProfile /> */}
-                <LogoutButton/>
               </div>
-            </div>
-          </header>
-
-          {/* 메인 컨텐츠 및 푸터 (기존과 동일) */}
-          <main className="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
-          <footer className="text-center p-4 sm:p-6 text-xs sm:text-sm text-[rgb(var(--muted-foreground-rgb))] border-t border-[rgb(var(--card-border-rgb))] bg-[rgb(var(--card-rgb))] transition-colors duration-300">
-            © {new Date().getFullYear()} CrewManager Pro. 모든 권리 보유.
-          </footer>
-        </div>
-
-        <MobileBottomNav />
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <button className="p-2 rounded-full hover:bg-gray-100">
+                  <FiBell className="w-5 h-5 text-gray-600" />
+                </button>
+                <Link href="/settings" className="p-2 rounded-full hover:bg-gray-100">
+                  <FiSettings className="w-5 h-5 text-gray-600" />
+                </Link>
+                <LogoutButton />
+              </div>
+            </header>
+            <main className="flex-grow p-4 sm:p-8">{children}</main>
+          </div>
+          <MobileBottomNav />
+        </CrewProvider>
       </body>
     </html>
   );
